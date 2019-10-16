@@ -8,7 +8,7 @@ from app.app import read_log_line
 class TestApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        LOG_FILE = os.path.join(os.getcwd(), 'maillog')
+        LOG_FILE = os.path.join(os.getcwd(), 'tests', 'maillog')
         cls.SHORTENED_LOG_FILE = os.path.join(os.getcwd(), 'shortened_maillog')
             
         with open(cls.SHORTENED_LOG_FILE, 'w') as log:
