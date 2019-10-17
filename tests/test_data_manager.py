@@ -1,14 +1,8 @@
 from collections import defaultdict
 import unittest
 
-from .context import app
-from app.data_manager import ManageData
-
-
-def get_fields(ID='D69F5DF04F4',
-               client_email='krasteplokomplekt@yandex.ru',
-               receiver='arsenal-krsk@mail.ru',):
-    pass # TODO
+from .context import mail_log_parser
+from mail_log_parser.data_manager import ManageData
 
 
 class TestManageQueueTracker(unittest.TestCase):
@@ -60,7 +54,7 @@ class TestManageQueueTracker(unittest.TestCase):
     def test_manage_queue_tracker_with_open_queue_group(self):
         self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
         self.assertEqual(self.MOCK_QUEUE_TRACKER, {
-            self.ID: {'client_email': self.CLIENT_EMAIL ,
+            self.ID: {'client_email': self.CLIENT_EMAIL,
                       'receivers': {}}
         })
 
@@ -107,47 +101,62 @@ class TestManageQueueTracker(unittest.TestCase):
 
 class TestManageEmailTracker(TestManageQueueTracker, unittest.TestCase):
     def test_manage_email_tracker_new_email_nothing_sent(self):
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
+        self.manager.queue_tracker_db = {
+            1: {'client_email': self.CLIENT_EMAIL, 'receivers': {} }
+        }
+        self.manager.manage_email_tracker(1)
         self.assertEqual(self.MOCK_EMAIL_TRACKER, {self.CLIENT_EMAIL: 0})
 
     def test_manage_email_tracker_new_email_one_sent(self):
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_SEND_ATTEMPT_SUCCESS)
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
+        self.manager.queue_tracker_db = {
+            1: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver': 1}
+        }}
+        self.manager.manage_email_tracker(1)
         self.assertEqual(self.MOCK_EMAIL_TRACKER, {self.CLIENT_EMAIL: 1})
     
     def test_manage_email_tracker_old_email_one_more_sent(self):
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_SEND_ATTEMPT_SUCCESS)
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
+        self.manager.queue_tracker_db = {
+            1: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver': 1}
+        }}
+        self.manager.manage_email_tracker(1)
 
-        self.manager.manage_queue_tracker(self.FIELDS_BACKUP_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_BACKUP_SEND_ATTEMPT_SUCCESS)
-        self.manager.manage_queue_tracker(self.FIELDS_BACKUP_CLOSE_QUEUE)
+        self.manager.queue_tracker_db = {
+            2: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver': 1}
+        }}
+        self.manager.manage_email_tracker(2)
         self.assertEqual(self.MOCK_EMAIL_TRACKER, {self.CLIENT_EMAIL: 2})
     
     def test_manage_email_tracker_two_receivers_two_sent_two_attempts(self):
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_SEND_ATTEMPT_FAIL)
-        for receiver in [self.RECEIVER, self.BACKUP_RECEIVER]:
-            self.manager.manage_queue_tracker([
-                ('ID', self.ID),
-                ('receivers', receiver),
-                ('status', 'sent')
-            ])
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
+        self.manager.queue_tracker_db = {
+            1: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver_1': 0}
+        }}
+        self.manager.manage_email_tracker(1)
+
+        self.manager.queue_tracker_db = {
+            2: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver_2': 1}
+        }}
+        self.manager.manage_email_tracker(2)
+
+        self.manager.queue_tracker_db = {
+            3: {'client_email': self.CLIENT_EMAIL,
+                'receivers': {'receiver_1': 1}
+        }}
+        self.manager.manage_email_tracker(3)
         self.assertEqual(self.MOCK_EMAIL_TRACKER, {self.CLIENT_EMAIL: 2})
 
 
 class TestManageDeliveryTracker(TestManageQueueTracker, unittest.TestCase):
     def test_manage_delivery_tracker(self):
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_SEND_ATTEMPT_FAIL)
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_OPEN_QUEUE)
-        self.manager.manage_queue_tracker(self.FIELDS_SEND_ATTEMPT_SUCCESS)
-        self.manager.manage_queue_tracker(self.FIELDS_CLOSE_QUEUE)
+        self.manager.queue_tracker_db= {
+            1: {'client_email': '', 'receivers': {'receiver_email_1': 1,
+                                                  'receiver_email_2': 0,} }
+        }
+        self.manager.manage_delivery_tracker(1)
         self.assertEqual(self.MOCK_DELIVERY_TRACKER,
                         {'undelivered': 1, 'delivered': 1})
 

@@ -1,14 +1,14 @@
 import os
 import unittest
 
-from .context import app
-from app.app import read_log_line
+from .context import mail_log_parser
+from mail_log_parser.app import main
 
 
 class TestApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        LOG = os.path.join(os.getcwd(), 'tests', 'maillog')
+        LOG = os.path.join(os.getcwd(), 'maillog')
         cls.SHORT_LOG = {
             'path': os.path.join(os.getcwd(), 'maillog_excerpt'),
             'limit': 100,
@@ -22,12 +22,8 @@ class TestApp(unittest.TestCase):
     def tearDownClass(cls):
         os.remove(cls.SHORT_LOG['path'])
 
-    def test_read_log_line(self):
-        log_line = read_log_line(self.SHORT_LOG['path'])
-        for _ in range(self.SHORT_LOG['limit']):
-            self.assertIsNotNone(next(log_line))
-        with self.assertRaises(StopIteration):
-            next(log_line)
+    def test_main(self):
+        self.assertIsNone(main(self.SHORT_LOG['path']))
 
 
 if __name__ == '__main__':

@@ -1,8 +1,7 @@
 import unittest
 
-from .context import app
-from app.parser import ParseLogLine
-from app import locators
+from .context import mail_log_parser
+from mail_log_parser.parser import ParseLogLine
 
 
 class MockLines:
@@ -42,7 +41,7 @@ class TestParser(unittest.TestCase):
     def test_parser_open_queue_success(self):
         parse_log_line = ParseLogLine(MockLines.LINE_OPEN_QUEUE)
         self.assertEqual(
-            list(parse_log_line.parser(locators.OPEN_QUEUE)),
+            parse_log_line.parser(),
             [('ID', '25E6CDF04F4'),
             ('client_email', 'krasteplokomplekt@yandex.ru')]
         )
@@ -50,14 +49,14 @@ class TestParser(unittest.TestCase):
     def test_parser_server_queue_success(self):
         parse_log_line = ParseLogLine(MockLines.LINE_SERVER_QUEUE)
         self.assertEqual(
-            list(parse_log_line.parser(locators.SERVER_NOTICE_QUEUE)),
+            parse_log_line.parser(),
             [('ID', 'D69F5DF04F4'), ('client_email', '')]
         )
 
     def test_parser_sent_attempt_sent(self):
         parse_log_line = ParseLogLine(MockLines.LINE_SEND_ATTEMPT_SUCCESS)
         self.assertEqual(
-            list(parse_log_line.parser(locators.SEND_ATTEMPT)),
+            parse_log_line.parser(),
             [('ID', '25E6CDF04F4'),
             ('receivers', 'arsenal-krsk@mail.ru'),
             ('status', 'sent')]
@@ -66,7 +65,7 @@ class TestParser(unittest.TestCase):
     def test_parser_sent_attempt_not_sent(self):
         parse_log_line = ParseLogLine(MockLines.LINE_SEND_ATTEMPT_FAIL)
         self.assertEqual(
-            list(parse_log_line.parser(locators.SEND_ATTEMPT)),
+            parse_log_line.parser(),
             [('ID', '718F4DF04E9'),
             ('receivers', 'arsenya08@mail.ru'),
             ('status', 'bounced')]
@@ -75,7 +74,7 @@ class TestParser(unittest.TestCase):
     def test_parser_close_queue(self):
         parse_log_line = ParseLogLine(MockLines.LINE_CLOSE_QUEUE)
         self.assertEqual(
-            list(parse_log_line.parser(locators.CLOSE_QUEUE)),
+            parse_log_line.parser(),
             [('ID', 'F1DB8DF04EF')]
         )
 
