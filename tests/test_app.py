@@ -10,7 +10,7 @@ class TestApp(unittest.TestCase):
     def setUpClass(cls):
         LOG = os.path.join(os.getcwd(), 'tests', 'maillog')
         cls.SHORT_LOG = {
-            'path': os.path.join(os.getcwd(), 'shortened_maillog'),
+            'path': os.path.join(os.getcwd(), 'maillog_excerpt'),
             'limit': 100,
         }
         with open(cls.SHORT_LOG['path'], 'w') as short_log:
