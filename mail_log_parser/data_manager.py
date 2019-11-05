@@ -1,17 +1,16 @@
 class ManageData:
-    def __init__(self, queue_tracker_db, email_tracker_db, delivery_tracker):
+    def __init__(self, queue_tracker_db, email_tracker_db, delivery_tracker_db):
         self.queue_tracker_db = queue_tracker_db
         self.email_tracker_db = email_tracker_db
-        self.delivery_tracker_db = delivery_tracker
+        self.delivery_tracker_db = delivery_tracker_db
 
     def manage_queue_tracker(self, fields):
         """
-        Receive one of the following located groups as <args>:
+        Receive one of the following located groups as <fields>:
             [('ID', <id>), ('client_email', <email>)];
-            [('ID', <id>), ('client_email', <''>)];
             [('ID', <id>), ('receivers', <email>), ('status', <status>)];
             [('ID', <id>)];
-        and store it in the <queue_tracker_db>.
+        and manage the <queue_tracker_db> accordingly.
         """
         if len(fields) == 1:
             ID = fields[0][1]
@@ -46,7 +45,7 @@ class ManageData:
     def manage_delivery_tracker(self, ID):
         """
         Go through all receivers of <ID> queue of <queue_tracker_db>,
-        and add their delivery statuses to the <delivery_tracker> counter
+        and add their delivery statuses to the <delivery_tracker_db> counter
         """
         receivers = self.queue_tracker_db[ID]['receivers']
         for receiver in receivers:
@@ -54,3 +53,17 @@ class ManageData:
                 self.delivery_tracker_db['delivered'] += 1
             else:
                 self.delivery_tracker_db['undelivered'] += 1
+
+    def print_email_tracker_results(self):
+        print('\nEmail tracker results:\n')
+        for client_email, num_of_letters_sent in self.email_tracker_db.items():
+            if not client_email:
+                client_email = 'SERVER'
+            print(f'\t<{client_email}> sent {num_of_letters_sent} letter(s).')
+
+    def print_delivery_tracker_results(self):
+        delivered = self.delivery_tracker_db['delivered']
+        undelivered = self.delivery_tracker_db['undelivered']
+        print('\nDelivery tracker results:\n')
+        print(f'\tDelivered: {delivered} letter(s).')
+        print(f'\tUndelivered: {undelivered} letter(s).')
