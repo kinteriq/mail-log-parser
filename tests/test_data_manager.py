@@ -1,8 +1,10 @@
 from collections import defaultdict
+import os
+import sqlite3
 import unittest
 
 from .context import mail_log_parser
-from mail_log_parser.data_manager import ManageData
+from mail_log_parser.data_manager import ManageData, ManageDatabase
 
 
 class TestManageQueueTracker(unittest.TestCase):
@@ -159,6 +161,43 @@ class TestManageDeliveryTracker(TestManageQueueTracker, unittest.TestCase):
         self.manager.manage_delivery_tracker(1)
         self.assertEqual(self.MOCK_DELIVERY_TRACKER,
                         {'undelivered': 1, 'delivered': 1})
+
+
+class TestManageDatabase(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.database_path = os.path.join(os.getcwd(), 'test_manage_database.db')
+    
+    @classmethod
+    def tearDownClass(cls):
+        if os.path.exists(cls.database_path):
+            os.remove(cls.database_path)
+
+    def _execute_command(self, *command):
+        con = sqlite3.connect(self.database_path)
+        cursor = con.cursor()
+        result = cursor.execute(*command)
+        if result:
+            result = result.fetchall()
+        con.commit()
+        con.close()
+        return result
+
+    def test_email_tracker_transfer_data_ok(self):
+        self._execute_command('''CREATE TABLE IF NOT EXISTS email_tracker
+            (client_email TEXT PRIMARY KEY, num_of_letters_sent INTEGER)''')
+        db_manager = ManageDatabase(
+            path=self.database_path,
+            queue_tracker_db=None,
+            email_tracker_db={'test@test.com': 12},
+            delivery_tracker_db=None
+        )
+        db_manager.transfer_data()
+        
+        self.assertEqual(
+            self._execute_command('SELECT * FROM email_tracker'),
+            [('test@test.com', 12)]
+        )
 
 
 if __name__ == '__main__':

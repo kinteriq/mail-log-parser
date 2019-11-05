@@ -3,19 +3,19 @@ import sys
 
 from .data import QUEUE_TRACKER, EMAIL_TRACKER, DELIVERY_TRACKER
 from .parser import ParseLogLine
-from .data_manager import ManageData
+from .data_manager import ManageData, ManageDatabase
 
 
-DATA = {
+_DATA = {
     'queue_tracker_db': QUEUE_TRACKER,
     'email_tracker_db': EMAIL_TRACKER,
     'delivery_tracker_db': DELIVERY_TRACKER,
 }
 
 
-def main():
+def main(database_path):
     filepath = receive_log_file_path()
-    db_manager = ManageData(**DATA)
+    db_manager = ManageDatabase(path=database_path, **_DATA)
     with open(filepath, 'r') as log:
         line = log.readline()
         while line:
@@ -24,6 +24,9 @@ def main():
             if parsed:
                 db_manager.manage_queue_tracker(parsed)
             line = log.readline()
+    db_manager.create_db()
+    db_manager.transfer_data()
+    print(f'Results are saved in "{database_path}"')
 
 
 def receive_log_file_path():
@@ -35,4 +38,3 @@ def receive_log_file_path():
     else:
         raise SystemExit('Path to log file is not provided')
     return log_filepath
-

@@ -1,3 +1,5 @@
+import sqlite3
+
 class ManageData:
     def __init__(self, queue_tracker_db, email_tracker_db, delivery_tracker_db):
         self.queue_tracker_db = queue_tracker_db
@@ -53,17 +55,28 @@ class ManageData:
                 self.delivery_tracker_db['delivered'] += 1
             else:
                 self.delivery_tracker_db['undelivered'] += 1
+    
 
-    def print_email_tracker_results(self):
-        print('\nEmail tracker results:\n')
-        for client_email, num_of_letters_sent in self.email_tracker_db.items():
-            if not client_email:
-                client_email = 'SERVER'
-            print(f'\t<{client_email}> sent {num_of_letters_sent} letter(s).')
+class ManageDatabase(ManageData):
+    def __init__(self, path, *args, **kwargs):
+        self.path = path
+        super().__init__(*args, **kwargs)
 
-    def print_delivery_tracker_results(self):
-        delivered = self.delivery_tracker_db['delivered']
-        undelivered = self.delivery_tracker_db['undelivered']
-        print('\nDelivery tracker results:\n')
-        print(f'\tDelivered: {delivered} letter(s).')
-        print(f'\tUndelivered: {undelivered} letter(s).')
+    def _execute_command(self, *command):
+        con = sqlite3.connect(self.path)
+        cursor = con.cursor()
+        result = cursor.execute(*command)
+        if result:
+            result = result.fetchall()
+        con.commit()
+        con.close()
+        return result
+
+    def create_db(self):
+        self._execute_command('''CREATE TABLE IF NOT EXISTS email_tracker
+            (client_email TEXT PRIMARY KEY, num_of_letters_sent INTEGER)''')
+    
+    def transfer_data(self):
+        for email, num_of_letters in self.email_tracker_db.items():
+            self._execute_command('''INSERT INTO email_tracker VALUES
+                (?, ?)''', (email, num_of_letters))
