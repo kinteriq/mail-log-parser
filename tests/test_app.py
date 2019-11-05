@@ -1,8 +1,9 @@
 import os
 import unittest
+from unittest import mock
 
 from .context import mail_log_parser
-from mail_log_parser.app import main
+from mail_log_parser.app import main, receive_log_file_path
 
 
 class TestApp(unittest.TestCase):
@@ -23,7 +24,25 @@ class TestApp(unittest.TestCase):
         os.remove(cls.SHORT_LOG['path'])
 
     def test_main(self):
-        self.assertIsNone(main(self.SHORT_LOG['path']))
+        with mock.patch('mail_log_parser.app.receive_log_file_path',
+                        lambda: self.SHORT_LOG['path']):
+            self.assertIsNone(main())
+
+    def test_receive_log_file_path_as_sys_argv(self):
+        with mock.patch('sys.argv',
+            ['mail_log_parser',
+             self.SHORT_LOG['path']]
+        ):
+            self.assertEqual(receive_log_file_path(), self.SHORT_LOG['path'])
+        
+    def test_receive_wrong_log_file_path(self):
+        with self.assertRaises(SystemExit) as e:
+            with mock.patch('sys.argv',
+                ['mail_log_parser',
+                'wrong_filepath_test_mail_log_parser']
+            ):
+                receive_log_file_path()
+            self.assertIn('No such file:', e)
 
 
 if __name__ == '__main__':

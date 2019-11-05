@@ -1,3 +1,6 @@
+import os
+import sys
+
 from .data import QUEUE_TRACKER, EMAIL_TRACKER, DELIVERY_TRACKER
 from .parser import ParseLogLine
 from .data_manager import ManageData
@@ -10,7 +13,8 @@ DATA = {
 }
 
 
-def main(filepath):
+def main():
+    filepath = receive_log_file_path()
     db_manager = ManageData(**DATA)
     with open(filepath, 'r') as log:
         line = log.readline()
@@ -22,6 +26,16 @@ def main(filepath):
             line = log.readline()
     print_email_tracker_results(db_manager)
     print_delivery_tracker_results(db_manager)
+
+
+def receive_log_file_path():
+    log_filepath = os.path.join(os.getcwd(), 'maillog')
+    if len(sys.argv) == 2:
+        if os.path.exists(sys.argv[1]):
+            log_filepath = sys.argv[1]
+        else:
+            raise SystemExit(f'No such file: {sys.argv[1]}')
+    return log_filepath
 
 
 def print_email_tracker_results(data):
