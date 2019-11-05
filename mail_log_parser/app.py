@@ -27,10 +27,12 @@ def main():
 
 
 def receive_log_file_path():
-    log_filepath = os.path.join(os.getcwd(), 'maillog')
     if len(sys.argv) == 2:
         if os.path.exists(sys.argv[1]):
             log_filepath = sys.argv[1]
         else:
             raise SystemExit(f'No such file: {sys.argv[1]}')
+    else:
+        raise SystemExit('Path to log file is not provided')
     return log_filepath
+

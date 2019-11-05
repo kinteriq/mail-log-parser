@@ -9,7 +9,7 @@ from mail_log_parser.app import main, receive_log_file_path
 class TestApp(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        LOG = os.path.join(os.getcwd(), 'maillog')
+        LOG = os.path.join(os.getcwd(), os.path.join('tests', 'maillog'))
         cls.SHORT_LOG = {
             'path': os.path.join(os.getcwd(), 'maillog_excerpt'),
             'limit': 100,
@@ -28,6 +28,10 @@ class TestApp(unittest.TestCase):
                         lambda: self.SHORT_LOG['path']):
             self.assertIsNone(main())
 
+    def test_no_log_file_path_is_provided(self):
+        with self.assertRaises(SystemExit) as e:
+            main()
+            
     def test_receive_log_file_path_as_sys_argv(self):
         with mock.patch('sys.argv',
             ['mail_log_parser',
@@ -42,7 +46,6 @@ class TestApp(unittest.TestCase):
                 'wrong_filepath_test_mail_log_parser']
             ):
                 receive_log_file_path()
-            self.assertIn('No such file:', e)
 
 
 if __name__ == '__main__':
